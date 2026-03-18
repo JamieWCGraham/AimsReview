@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { openai } from "@/lib/ai/client";
 import { SYSTEM_PROMPT, buildSpecificAimsUserPrompt } from "@/lib/ai/prompts";
 import { GrantCritiqueSchema, GrantCritique } from "@/lib/schemas/critique";
 import { logger } from "@/lib/logging/logger";
 import { MODEL_NAME, PROMPT_VERSION, TEMPERATURE } from "@/lib/constants";
 import { AnalyzeError } from "@/lib/utils/errors";
+import { getTracedOpenAI } from "@/lib/ai/langfuse";
 
 const MAX_RETRIES = 1;
 
@@ -113,28 +113,44 @@ export async function analyzeSpecificAims(args: {
     try {
       const userPrompt = buildSpecificAimsUserPrompt({ specificAimsText });
 
-      const response = await openai.responses.create({
-        model: MODEL_NAME,
-        temperature: TEMPERATURE,
-        text: {
-          format: {
-            type: "json_schema",
-            name: "grant_critique",
-            schema: grantCritiqueJsonSchema,
-            strict: true
-          }
+      const tracedOpenai = await getTracedOpenAI({
+        generationName: "aims-review.analyze_specific_aims",
+        generationMetadata: {
+          requestId,
+          attempt,
+          promptVersion: PROMPT_VERSION
         },
-        input: [
-          {
-            role: "system",
-            content: SYSTEM_PROMPT
-          },
-          {
-            role: "user",
-            content: userPrompt
-          }
-        ]
+        tags: ["aims-review", "specific-aims"]
       });
+
+      let response: unknown = null;
+      try {
+        response = await tracedOpenai.responses.create({
+          model: MODEL_NAME,
+          temperature: TEMPERATURE,
+          text: {
+            format: {
+              type: "json_schema",
+              name: "grant_critique",
+              schema: grantCritiqueJsonSchema,
+              strict: true
+            }
+          },
+          input: [
+            {
+              role: "system",
+              content: SYSTEM_PROMPT
+            },
+            {
+              role: "user",
+              content: userPrompt
+            }
+          ]
+        });
+      } finally {
+        // Ensure queued spans are flushed in short-lived runtimes.
+        await (tracedOpenai as { flushAsync?: () => Promise<void> }).flushAsync?.();
+      }
 
       // Prefer top-level output_text (recommended by SDK); otherwise use first output item's content.
       const responseObj = response as {
