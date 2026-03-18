@@ -1,17 +1,27 @@
-import { TextareaHTMLAttributes } from "react";
+import { ReactNode, TextareaHTMLAttributes } from "react";
 import clsx from "clsx";
 
 type Props = {
   label: string;
   error?: string | null;
+  helperBelowLabel?: ReactNode;
 } & TextareaHTMLAttributes<HTMLTextAreaElement>;
 
-export function AimInput({ label, error, className, ...rest }: Props) {
+export function AimInput({
+  label,
+  error,
+  helperBelowLabel,
+  className,
+  ...rest
+}: Props) {
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-slate-800">
         {label}
       </label>
+      {helperBelowLabel ? (
+        <div className="text-xs text-slate-600">{helperBelowLabel}</div>
+      ) : null}
       <textarea
         className={clsx(
           "min-h-[220px] w-full resize-vertical rounded-md border bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600",
