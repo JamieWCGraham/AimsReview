@@ -1,7 +1,11 @@
 import type { GrantCritique } from "@/lib/schemas/critique";
 import { SectionCard } from "@/components/SectionCard";
 import { CopyResultsButton } from "@/components/CopyResultsButton";
-import { formatCritiqueForClipboard } from "@/lib/utils/format";
+import { DownloadMarkdownButton } from "@/components/DownloadMarkdownButton";
+import {
+  formatCritiqueAsMarkdown,
+  formatCritiqueForClipboard
+} from "@/lib/utils/format";
 
 type Props = {
   critique: GrantCritique;
@@ -15,13 +19,33 @@ export function ResultsPanel({ critique, promptVersion, model }: Props) {
     await navigator.clipboard.writeText(text);
   }
 
+  function handleDownloadMarkdown() {
+    const markdown = formatCritiqueAsMarkdown(critique);
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+
+    const a = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+
+    const date = new Date().toISOString().slice(0, 10);
+    a.download = `aims-review-${date}.md`;
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold text-slate-900">
           Structured critique
         </h2>
-        <CopyResultsButton onCopy={handleCopy} />
+        <div className="flex items-center gap-2">
+          <DownloadMarkdownButton onDownload={handleDownloadMarkdown} />
+          <CopyResultsButton onCopy={handleCopy} />
+        </div>
       </div>
 
       <p className="text-xs text-slate-500">
