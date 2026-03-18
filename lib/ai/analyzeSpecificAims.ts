@@ -136,7 +136,15 @@ export async function analyzeSpecificAims(args: {
         ]
       });
 
-      const content = response.output[0]?.content[0];
+      const firstOutput = response.output[0];
+      if (!firstOutput || firstOutput.type !== "message") {
+        throw new AnalyzeError(
+          "INVALID_MODEL_OUTPUT",
+          "Model did not return a message output."
+        );
+      }
+
+      const content = firstOutput.message.content[0];
       if (
         !content ||
         (content.type !== "output_text" && content.type !== "output_json")
