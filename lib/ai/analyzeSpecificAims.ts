@@ -136,32 +136,43 @@ export async function analyzeSpecificAims(args: {
         ]
       });
 
-      const firstOutput = response.output[0];
-      if (!firstOutput || firstOutput.type !== "message") {
+      // Prefer top-level output_text (recommended by SDK); otherwise use first output item's content.
+      const responseObj = response as {
+        output_text?: string;
+        output?: Array<{
+          type: string;
+          content?: Array<{ type: string; text?: string }>;
+        }>;
+      };
+
+      let rawText: string | undefined;
+
+      if (typeof responseObj.output_text === "string" && responseObj.output_text.trim()) {
+        rawText = responseObj.output_text;
+      } else {
+        const firstOutput = responseObj.output?.[0];
+        if (
+          firstOutput?.type === "message" &&
+          Array.isArray(firstOutput.content) &&
+          firstOutput.content.length > 0
+        ) {
+          const firstContent = firstOutput.content[0];
+          if (firstContent?.type === "output_text" && typeof firstContent.text === "string") {
+            rawText = firstContent.text;
+          }
+        }
+      }
+
+      if (rawText == null || !rawText.trim()) {
         throw new AnalyzeError(
           "INVALID_MODEL_OUTPUT",
           "Model did not return a message output."
         );
       }
 
-      const content = firstOutput.message.content[0];
-      if (
-        !content ||
-        (content.type !== "output_text" && content.type !== "output_json")
-      ) {
-        throw new AnalyzeError(
-          "INVALID_MODEL_OUTPUT",
-          "Model did not return structured JSON content."
-        );
-      }
-
       let parsedJson: RawModelResult;
       try {
-        if (content.type === "output_json") {
-          parsedJson = content.json;
-        } else {
-          parsedJson = JSON.parse(content.text);
-        }
+        parsedJson = JSON.parse(rawText);
       } catch (err) {
         throw new AnalyzeError(
           "INVALID_MODEL_OUTPUT",
