@@ -5,9 +5,11 @@ import { formatCritiqueForClipboard } from "@/lib/utils/format";
 
 type Props = {
   critique: GrantCritique;
+  promptVersion: string;
+  model: string;
 };
 
-export function ResultsPanel({ critique }: Props) {
+export function ResultsPanel({ critique, promptVersion, model }: Props) {
   async function handleCopy() {
     const text = formatCritiqueForClipboard(critique);
     await navigator.clipboard.writeText(text);
@@ -21,6 +23,10 @@ export function ResultsPanel({ critique }: Props) {
         </h2>
         <CopyResultsButton onCopy={handleCopy} />
       </div>
+
+      <p className="text-xs text-slate-500">
+        Prompt {promptVersion} · {model} · generated just now
+      </p>
 
       <div className="grid gap-4 md:grid-cols-2">
         <SectionCard title="Overall Assessment">

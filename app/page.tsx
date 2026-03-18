@@ -24,6 +24,22 @@ export default function Page() {
   const [inputError, setInputError] = useState<string | null>(null);
   const resultsRef = useRef<HTMLDivElement | null>(null);
 
+  const exampleAims = `SPECIFIC AIMS
+
+Acute kidney injury (AKI) affects over 10 million hospitalized patients worldwide each year and is strongly associated with mortality, prolonged length of stay, and progression to chronic kidney disease. Despite decades of work, clinicians still lack reliable, early warning tools that can identify high‑risk patients in time to intervene. Existing risk scores are coarse, static, and rarely integrated into real‑time workflows. As a result, potentially preventable renal injury is often detected only after creatinine has already risen, when damage is harder to reverse.
+
+Our long‑term goal is to reduce preventable AKI in hospitalized adults by coupling high‑fidelity electronic health record (EHR) data with interpretable, clinician‑facing decision support. The overall objective of this application is to develop and prospectively evaluate a pragmatic, real‑time AKI risk prediction system embedded in routine hospital care. Our central hypothesis is that a well‑calibrated, interpretable model that surfaces specific, actionable risk factors will improve clinician trust and enable earlier, targeted interventions that reduce the incidence and severity of AKI. This hypothesis is supported by strong preliminary data from our institution demonstrating that (1) granular trajectories of vitals, labs, and medication exposures are predictive of near‑term AKI and (2) clinicians are more likely to act on models that explain “why” a patient is high‑risk.
+
+We will pursue the following Specific Aims:
+
+Aim 1: Develop and internally validate a real‑time AKI prediction model using multi‑center EHR data. We will assemble a retrospective cohort of >150,000 hospitalizations across three academic medical centers, harmonize key variables, and train time‑updated models to predict AKI within the next 48 hours. We will compare traditional regression, gradient boosting, and sequence models, prioritizing calibration, transportability, and stability across sites. We expect to identify a model that reliably stratifies risk and remains robust across hospitals and subgroups.
+
+Aim 2: Design an interpretable, clinician‑facing interface that links AKI risk to concrete, patient‑specific drivers. Using human‑centered design methods with hospitalists, nephrologists, and nurses, we will iteratively prototype visualizations that expose the main contributors to a given patient’s risk (e.g., nephrotoxic medications, volume status, hemodynamics) and suggest candidate actions aligned with existing guidelines. We will evaluate comprehension, perceived usefulness, and potential for alert fatigue in simulation studies. Our working hypothesis is that transparent, factor‑level explanations will increase clinician willingness to act on alerts without increasing cognitive load.
+
+Aim 3: Conduct a pragmatic, stepped‑wedge trial to test whether the AKI prediction and explanation system improves clinical processes and patient outcomes. We will roll out the intervention across six medicine units over 18 months, comparing rates of AKI, timing of nephrology consultation, adjustment of nephrotoxic medications, and adherence to hospital AKI bundles before and after activation. We anticipate that units receiving the intervention will demonstrate earlier recognition of high‑risk patients, more timely process‑of‑care changes, and a measurable reduction in moderate‑to‑severe AKI.
+
+Impact: Successful completion of these aims will establish a scalable, interpretable framework for real‑time AKI risk prediction that is tightly integrated into clinical workflows. By emphasizing transparency, transportability, and pragmatic evaluation, this work will provide a generalizable blueprint for using EHR‑driven models to prevent organ injury in hospitalized patients.`;
+
   useEffect(() => {
     if (state.status === "success" && resultsRef.current) {
       resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -89,7 +105,7 @@ export default function Page() {
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 pb-10 pt-10">
       <header className="mb-8 space-y-2">
-        <h1 className="text-2xl font-semibold text-slate-900">
+        <h1 className="text-3xl font-semibold text-slate-900">
           Aims Review
         </h1>
         <p className="max-w-2xl text-sm text-slate-700">
@@ -101,6 +117,21 @@ export default function Page() {
       <section className="space-y-4">
         <AimInput
           label="Specific Aims text"
+          helperBelowLabel={
+            <div className="flex items-center gap-3">
+              <span>Best results: paste a full 1-page Specific Aims section.</span>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                onClick={() => {
+                  setText(exampleAims);
+                  setInputError(null);
+                }}
+              >
+                Load example
+              </button>
+            </div>
+          }
           placeholder="Paste the full text of your Specific Aims page here..."
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -121,7 +152,11 @@ export default function Page() {
 
       <section ref={resultsRef} className="mt-10">
         {showResults && (
-          <ResultsPanel critique={state.data.result} />
+          <ResultsPanel
+            critique={state.data.result}
+            promptVersion={state.data.promptVersion}
+            model={state.data.model}
+          />
         )}
       </section>
 
@@ -129,7 +164,8 @@ export default function Page() {
         <p className="text-xs text-slate-500">
           Feedback is generated from the writing provided and should be treated
           as an early critique aid, not a substitute for expert scientific
-          review.
+          review. Evaluates only the writing provided; does not verify
+          scientific claims.
         </p>
       </footer>
     </main>
