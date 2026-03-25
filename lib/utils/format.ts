@@ -1,18 +1,31 @@
 import type { GrantCritique } from "@/lib/schemas/critique";
 
+function appendRubricSections(lines: string[], critique: GrantCritique): void {
+  lines.push("Reviewer rubric (1–9)");
+  lines.push(
+    `Overall: ${critique.rubric.overall_score} / 9`,
+    critique.rubric.overall_rationale,
+    ""
+  );
+  const dims = [
+    ["significance", "Significance"],
+    ["innovation", "Innovation"],
+    ["approach", "Approach"],
+    ["feasibility", "Feasibility"]
+  ] as const;
+  for (const [key, label] of dims) {
+    const d = critique.rubric[key];
+    lines.push(`${label}: ${d.score} / 9`);
+    lines.push(d.rationale, "");
+  }
+}
+
 export function formatCritiqueForClipboard(critique: GrantCritique): string {
   const lines: string[] = [];
 
   lines.push("Aims Review", "");
 
-  lines.push("Overall Assessment");
-  lines.push(`Rating: ${critique.overall_assessment.rating}`);
-  lines.push(
-    `Reviewer Confidence: ${capitalize(
-      critique.overall_assessment.reviewer_confidence
-    )}`
-  );
-  lines.push(`Summary: ${critique.overall_assessment.summary}`, "");
+  appendRubricSections(lines, critique);
 
   lines.push("Strengths");
   if (critique.strengths.length === 0) {
@@ -37,31 +50,6 @@ export function formatCritiqueForClipboard(critique: GrantCritique): string {
   for (const s of critique.suggestions_for_improvement) {
     lines.push(`- ${s}`);
   }
-  lines.push("");
-
-  lines.push("Rewrite Suggestions");
-  if (critique.rewrite_suggestions.length === 0) {
-    lines.push("(none)");
-  } else {
-    critique.rewrite_suggestions.forEach((item, index) => {
-      const n = index + 1;
-      lines.push(`${n}. Issue: ${item.issue}`);
-      if (item.original_excerpt) {
-        lines.push(`   Original Excerpt: ${item.original_excerpt}`);
-      }
-      lines.push(`   Suggested Revision: ${item.suggested_revision}`, "");
-    });
-  }
-
-  lines.push("Meta Assessment");
-  lines.push(
-    `Likely Competitiveness: ${capitalize(
-      critique.meta_assessment.likely_competitiveness
-    )}`
-  );
-  lines.push(
-    `Main Risk Area: ${capitalize(critique.meta_assessment.main_risk_area)}`
-  );
 
   return lines.join("\n");
 }
@@ -71,14 +59,21 @@ export function formatCritiqueAsMarkdown(critique: GrantCritique): string {
 
   lines.push("# Aims Review", "");
 
-  lines.push("## Overall Assessment");
-  lines.push(`- **Rating**: ${critique.overall_assessment.rating}`);
+  lines.push("## Reviewer rubric (1–9)");
   lines.push(
-    `- **Reviewer Confidence**: ${capitalize(
-      critique.overall_assessment.reviewer_confidence
-    )}`
+    `- **Overall**: **${critique.rubric.overall_score} / 9** — ${critique.rubric.overall_rationale}`,
+    ""
   );
-  lines.push(`- **Summary**: ${critique.overall_assessment.summary}`, "");
+  for (const [key, label] of [
+    ["significance", "Significance"],
+    ["innovation", "Innovation"],
+    ["approach", "Approach"],
+    ["feasibility", "Feasibility"]
+  ] as const) {
+    const d = critique.rubric[key];
+    lines.push(`### ${label}: ${d.score} / 9`);
+    lines.push(`${d.rationale}`, "");
+  }
 
   lines.push("## Strengths");
   if (critique.strengths.length === 0) {
@@ -111,40 +106,7 @@ export function formatCritiqueAsMarkdown(critique: GrantCritique): string {
       lines.push(`- ${s}`);
     }
   }
-  lines.push("");
-
-  lines.push("## Rewrite Suggestions");
-  if (critique.rewrite_suggestions.length === 0) {
-    lines.push("(none)");
-  } else {
-    critique.rewrite_suggestions.forEach((item, index) => {
-      const n = index + 1;
-      lines.push(`${n}. **Issue**: ${item.issue}`);
-      if (item.original_excerpt) {
-        lines.push(`   - **Original Excerpt**: ${item.original_excerpt}`);
-      }
-      lines.push(
-        `   - **Suggested Revision**: ${item.suggested_revision}`,
-        ""
-      );
-    });
-  }
-
-  lines.push("## Meta Assessment");
-  lines.push(
-    `- **Likely Competitiveness**: ${capitalize(
-      critique.meta_assessment.likely_competitiveness
-    )}`
-  );
-  lines.push(
-    `- **Main Risk Area**: ${capitalize(critique.meta_assessment.main_risk_area)}`
-  );
 
   return lines.join("\n");
-}
-
-function capitalize(value: string): string {
-  if (!value) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 

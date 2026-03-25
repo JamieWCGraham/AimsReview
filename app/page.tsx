@@ -108,10 +108,14 @@ Impact: Successful completion of these aims will establish a scalable, interpret
         <h1 className="text-3xl font-semibold text-slate-900">
           Aims Review
         </h1>
-        <p className="max-w-2xl text-sm text-slate-700">
-          Structured critique for grant Specific Aims pages. Paste your full
-          Specific Aims text to simulate how a rigorous reviewer might respond.
-        </p>
+        <div className="max-w-2xl space-y-2 text-sm text-slate-700">
+          <p>
+            Structured critique assistant for research grant Specific Aims pages. Paste your full
+            Specific Aims text to simulate how a rigorous reviewer might
+            respond. This simulates a critical grant reviewer and highlights weaknesses
+            that could reduce funding probability.
+          </p>
+        </div>
       </header>
 
       <section className="space-y-4">

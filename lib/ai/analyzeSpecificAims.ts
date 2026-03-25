@@ -10,82 +10,66 @@ const MAX_RETRIES = 1;
 
 // JSON Schema used for model-side structured output constraints.
 // This mirrors GrantCritiqueSchema and is kept intentionally simple.
+const rubricDimension = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    score: { type: "integer", minimum: 1, maximum: 9 },
+    rationale: { type: "string" }
+  },
+  required: ["score", "rationale"]
+} as const;
+
 const grantCritiqueJsonSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
-    overall_assessment: {
+    rubric: {
       type: "object",
       additionalProperties: false,
       properties: {
-        rating: { type: "string" },
-        summary: { type: "string" },
-        reviewer_confidence: {
-          type: "string",
-          enum: ["low", "medium", "high"]
-        }
+        significance: rubricDimension,
+        innovation: rubricDimension,
+        approach: rubricDimension,
+        feasibility: rubricDimension,
+        overall_score: { type: "integer", minimum: 1, maximum: 9 },
+        overall_rationale: { type: "string" }
       },
-      required: ["rating", "summary", "reviewer_confidence"]
+      required: [
+        "significance",
+        "innovation",
+        "approach",
+        "feasibility",
+        "overall_score",
+        "overall_rationale"
+      ]
     },
     strengths: {
       type: "array",
-      items: { type: "string" }
+      items: { type: "string" },
+      minItems: 0,
+      maxItems: 8
     },
     major_concerns: {
       type: "array",
-      items: { type: "string" }
+      items: { type: "string" },
+      minItems: 1,
+      maxItems: 8
     },
     reviewer_critique: { type: "string" },
     suggestions_for_improvement: {
       type: "array",
-      items: { type: "string" }
-    },
-    rewrite_suggestions: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          issue: { type: "string" },
-          original_excerpt: { type: "string" },
-          suggested_revision: { type: "string" }
-        },
-        required: ["issue", "original_excerpt", "suggested_revision"]
-      }
-    },
-    meta_assessment: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        likely_competitiveness: {
-          type: "string",
-          enum: ["weak", "mixed", "promising"]
-        },
-        main_risk_area: {
-          type: "string",
-          enum: [
-            "significance",
-            "innovation",
-            "clarity",
-            "feasibility",
-            "approach",
-            "alignment",
-            "scope",
-            "writing"
-          ]
-        }
-      },
-      required: ["likely_competitiveness", "main_risk_area"]
+      items: { type: "string" },
+      minItems: 1,
+      maxItems: 8
     }
   },
   required: [
-    "overall_assessment",
+    "rubric",
     "strengths",
     "major_concerns",
     "reviewer_critique",
-    "suggestions_for_improvement",
-    "rewrite_suggestions",
-    "meta_assessment"
+    "suggestions_for_improvement"
   ]
 } as const;
 
