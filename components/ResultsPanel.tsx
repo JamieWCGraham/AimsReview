@@ -13,6 +13,13 @@ type Props = {
   model: string;
 };
 
+const RUBRIC_CRITERIA = [
+  { id: "significance" as const, label: "Significance" },
+  { id: "innovation" as const, label: "Innovation" },
+  { id: "approach" as const, label: "Approach" },
+  { id: "feasibility" as const, label: "Feasibility" }
+];
+
 export function ResultsPanel({ critique, promptVersion, model }: Props) {
   async function handleCopy() {
     const text = formatCritiqueForClipboard(critique);
@@ -52,33 +59,40 @@ export function ResultsPanel({ critique, promptVersion, model }: Props) {
         Prompt {promptVersion} · {model} · generated just now
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <SectionCard title="Overall Assessment">
-          <p className="text-sm">
-            <span className="font-semibold">Rating:</span>{" "}
-            {critique.overall_assessment.rating}
+      <SectionCard title="Reviewer rubric (1–9)">
+        <div className="border-b border-slate-200 pb-4">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="text-sm font-medium text-slate-600">Overall score</span>
+            <span className="text-3xl font-semibold tabular-nums tracking-tight text-slate-900">
+              {critique.rubric.overall_score}
+            </span>
+            <span className="text-sm text-slate-500">/ 9</span>
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-slate-700">
+            {critique.rubric.overall_rationale}
           </p>
-          <p className="text-sm">
-            <span className="font-semibold">Reviewer confidence:</span>{" "}
-            {critique.overall_assessment.reviewer_confidence}
-          </p>
-          <p className="mt-2 text-sm">
-            <span className="font-semibold">Summary:</span>{" "}
-            {critique.overall_assessment.summary}
-          </p>
-        </SectionCard>
-
-        <SectionCard title="Meta Assessment">
-          <p className="text-sm">
-            <span className="font-semibold">Likely competitiveness:</span>{" "}
-            {critique.meta_assessment.likely_competitiveness}
-          </p>
-          <p className="text-sm">
-            <span className="font-semibold">Main risk area:</span>{" "}
-            {critique.meta_assessment.main_risk_area}
-          </p>
-        </SectionCard>
-      </div>
+        </div>
+        <dl className="mt-4 space-y-4">
+          {RUBRIC_CRITERIA.map(({ id, label }) => {
+            const dim = critique.rubric[id];
+            return (
+              <div key={id}>
+                <dt className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="text-sm font-semibold text-slate-900">
+                    {label}
+                  </span>
+                  <span className="text-sm tabular-nums text-slate-600">
+                    {dim.score} / 9
+                  </span>
+                </dt>
+                <dd className="mt-1.5 text-sm leading-relaxed text-slate-700">
+                  {dim.rationale}
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
+      </SectionCard>
 
       <div className="grid gap-4 md:grid-cols-2">
         <SectionCard title="Strengths">
@@ -103,7 +117,9 @@ export function ResultsPanel({ critique, promptVersion, model }: Props) {
       </div>
 
       <SectionCard title="Reviewer Critique">
-        <p>{critique.reviewer_critique}</p>
+        <p className="text-sm leading-relaxed text-slate-700">
+          {critique.reviewer_critique}
+        </p>
       </SectionCard>
 
       <SectionCard title="Suggestions for Improvement">
@@ -112,34 +128,6 @@ export function ResultsPanel({ critique, promptVersion, model }: Props) {
             <li key={idx}>{s}</li>
           ))}
         </ul>
-      </SectionCard>
-
-      <SectionCard title="Rewrite Suggestions">
-        {critique.rewrite_suggestions.length === 0 ? (
-          <p className="text-sm text-slate-600">
-            No specific rewrite suggestions were generated.
-          </p>
-        ) : (
-          <ol className="space-y-3">
-            {critique.rewrite_suggestions.map((item, idx) => (
-              <li key={idx} className="space-y-1 text-sm">
-                <p>
-                  <span className="font-semibold">Issue:</span> {item.issue}
-                </p>
-                {item.original_excerpt && (
-                  <p>
-                    <span className="font-semibold">Original excerpt:</span>{" "}
-                    {item.original_excerpt}
-                  </p>
-                )}
-                <p>
-                  <span className="font-semibold">Suggested revision:</span>{" "}
-                  {item.suggested_revision}
-                </p>
-              </li>
-            ))}
-          </ol>
-        )}
       </SectionCard>
     </div>
   );
